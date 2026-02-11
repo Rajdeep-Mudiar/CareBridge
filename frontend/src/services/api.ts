@@ -5,11 +5,23 @@ const api = axios.create({
   withCredentials: true,
 });
 
+// Add interceptor to include token in headers
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
 export const authService = {
   loginWithGoogle: () => {
     window.location.href = `${api.defaults.baseURL}/auth/google`;
   },
-  logout: () => api.get('/auth/logout'),
+  logout: () => {
+    localStorage.removeItem('token');
+    return api.get('/auth/logout');
+  },
   getCurrentUser: () => api.get('/auth/me'),
 };
 

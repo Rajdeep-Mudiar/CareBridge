@@ -24,7 +24,7 @@ router.get(
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+    res.redirect(`${process.env.FRONTEND_URL}/dashboard?token=${token}`);
   }
 );
 
@@ -38,7 +38,7 @@ router.get('/logout', (req, res) => {
 // @desc    Get current user
 // @route   GET /api/auth/me
 router.get('/me', async (req, res) => {
-  const token = req.cookies.token;
+  const token = req.cookies.token || req.headers.authorization?.split(' ')[1];
   if (!token) return res.status(401).json({ message: 'Not authorized' });
 
   try {
