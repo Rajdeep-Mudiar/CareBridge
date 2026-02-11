@@ -8,10 +8,13 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
+    console.log('CareBridge: Checking Auth...');
     try {
       const response = await authService.getCurrentUser();
+      console.log('CareBridge: Auth Success:', response.data.email);
       setUser(response.data);
     } catch (error) {
+      console.error('CareBridge: Auth Failed:', error.response?.status || error.message);
       setUser(null);
     } finally {
       setLoading(false);
@@ -23,8 +26,8 @@ export const AuthProvider = ({ children }) => {
     const token = urlParams.get('token');
     
     if (token) {
+      console.log('CareBridge: Token found in URL, saving...');
       localStorage.setItem('token', token);
-      // Clean up URL
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     

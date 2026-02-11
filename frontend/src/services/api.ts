@@ -5,6 +5,8 @@ const api = axios.create({
   withCredentials: true,
 });
 
+console.log('CareBridge: API Base URL:', api.defaults.baseURL);
+
 // Add interceptor to include token in headers
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
