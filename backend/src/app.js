@@ -7,6 +7,9 @@ const authRoutes = require('./routes/auth.routes');
 
 const app = express();
 
+// Trust proxy for secure cookies in production (Render/Vercel)
+app.set('trust proxy', 1);
+
 // Passport config
 require('./config/passport')(passport);
 
