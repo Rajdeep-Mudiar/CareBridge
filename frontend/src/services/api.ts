@@ -11,7 +11,10 @@ console.log('CareBridge: API Base URL:', api.defaults.baseURL);
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
+    console.log('CareBridge: [Interceptor] Attaching Authorization header...');
     config.headers.Authorization = `Bearer ${token}`;
+  } else {
+    console.log('CareBridge: [Interceptor] No token found, sending request without Auth header.');
   }
   return config;
 });

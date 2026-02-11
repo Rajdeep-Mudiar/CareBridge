@@ -8,13 +8,21 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const checkAuth = async () => {
-    console.log('CareBridge: Checking Auth...');
+    const token = localStorage.getItem('token');
+    console.log('CareBridge: [checkAuth] Token in localStorage:', token ? 'Present (First 10 chars: ' + token.substring(0, 10) + '...)' : 'MISSING');
+    
+    console.log('CareBridge: [checkAuth] Initiating /api/auth/me request...');
     try {
       const response = await authService.getCurrentUser();
-      console.log('CareBridge: Auth Success:', response.data.email);
+      console.log('CareBridge: [checkAuth] SUCCESS. User:', response.data.email);
       setUser(response.data);
     } catch (error) {
-      console.error('CareBridge: Auth Failed:', error.response?.status || error.message);
+      console.error('CareBridge: [checkAuth] FAILED. Status:', error.response?.status);
+      console.error('CareBridge: [checkAuth] Error Message:', error.response?.data?.message || error.message);
+      if (error.response?.status === 401) {
+        console.warn('CareBridge: [checkAuth] Server rejected token (Unauthorized). Clearing localStorage.');
+        localStorage.removeItem('token');
+      }
       setUser(null);
     } finally {
       setLoading(false);
