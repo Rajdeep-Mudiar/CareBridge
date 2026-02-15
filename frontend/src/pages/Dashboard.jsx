@@ -242,10 +242,12 @@ const Dashboard = () => {
   
   // Organ health status - can be updated from backend API
   const [organStatus] = React.useState({
-    brain: 'normal',
-    heart: 'warning',
-    lungs: 'normal',
-    liver: 'normal'
+    brain: 'risk',
+    heart: 'diseased',
+    lungs: 'healthy',
+    liver: 'healthy',
+    stomach: 'healthy',
+    kidneys: 'risk'
   });
   
   const stats = [
@@ -273,27 +275,39 @@ const Dashboard = () => {
   const organDetails = {
     brain: {
       name: 'Brain',
-      status: organStatus.brain === 'normal' ? 'Healthy' : organStatus.brain === 'warning' ? 'Warning' : 'Critical',
+      status: organStatus.brain === 'healthy' ? 'Healthy' : organStatus.brain === 'risk' ? 'Risk' : 'Diseased',
       details: 'Cognitive function normal. Sleep quality: Good (7.5hrs avg). Stress levels: Low.',
       color: 'text-purple-400'
     },
     heart: {
       name: 'Heart',
-      status: organStatus.heart === 'normal' ? 'Excellent' : organStatus.heart === 'warning' ? 'Elevated' : 'Critical',
+      status: organStatus.heart === 'healthy' ? 'Healthy' : organStatus.heart === 'risk' ? 'Risk' : 'Diseased',
       details: 'Heart rate: 85 bpm (slightly elevated). Blood pressure: 135/85 mmHg. Consider reducing stress.',
       color: 'text-rose-400'
     },
     lungs: {
       name: 'Lungs',
-      status: organStatus.lungs === 'normal' ? 'Good' : organStatus.lungs === 'warning' ? 'Warning' : 'Critical',
+      status: organStatus.lungs === 'healthy' ? 'Healthy' : organStatus.lungs === 'risk' ? 'Risk' : 'Diseased',
       details: 'Oxygen saturation: 98%. Respiratory rate: 16 breaths/min. Lung capacity: 95%.',
       color: 'text-blue-400'
     },
     liver: {
       name: 'Liver',
-      status: organStatus.liver === 'normal' ? 'Normal' : organStatus.liver === 'warning' ? 'Warning' : 'Critical',
+      status: organStatus.liver === 'healthy' ? 'Healthy' : organStatus.liver === 'risk' ? 'Risk' : 'Diseased',
       details: 'Enzyme levels normal. No fatty deposits detected. Detoxification efficiency: 92%.',
       color: 'text-purple-400'
+    },
+    stomach: {
+      name: 'Stomach',
+      status: organStatus.stomach === 'healthy' ? 'Healthy' : organStatus.stomach === 'risk' ? 'Risk' : 'Diseased',
+      details: 'Digestive process normal. No signs of inflammation. Acid levels stable.',
+      color: 'text-amber-400'
+    },
+    kidneys: {
+      name: 'Kidneys',
+      status: organStatus.kidneys === 'healthy' ? 'Healthy' : organStatus.kidneys === 'risk' ? 'About to get diseased' : 'Diseased',
+      details: 'Filteration rate slightly below average. Hydration levels show deficiency. Up intake of fluids.',
+      color: 'text-emerald-400'
     }
   };
 
@@ -629,9 +643,9 @@ const Dashboard = () => {
                 <div className="flex items-center space-x-3">
                   <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Status:</span>
                   <span className={`px-3 py-1 rounded-full text-sm font-bold ${
-                    organStatus[selectedOrgan] === 'critical' 
+                    organStatus[selectedOrgan] === 'diseased' 
                       ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400'
-                      : organStatus[selectedOrgan] === 'warning'
+                      : organStatus[selectedOrgan] === 'risk'
                       ? 'bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400'
                       : 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
                   }`}>
