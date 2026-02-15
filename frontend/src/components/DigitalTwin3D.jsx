@@ -1,6 +1,6 @@
 import React, { Suspense, useRef } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Environment, ContactShadows, PerspectiveCamera, Html } from '@react-three/drei';
+import { OrbitControls, Environment, ContactShadows, PerspectiveCamera, Html, useGLTF, Center } from '@react-three/drei';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -39,8 +39,8 @@ const HealthDot = ({ position, status, organName, onOrganClick }) => {
   
   const getStatusColor = () => {
     switch (status) {
-      case 'critical': return '#ef4444'; // Red
-      case 'warning': return '#fbbf24'; // Yellow
+      case 'diseased': return '#ef4444'; // Red
+      case 'risk': return '#fbbf24'; // Yellow
       default: return '#10b981'; // Green (emerald)
     }
   };
@@ -53,196 +53,58 @@ const HealthDot = ({ position, status, organName, onOrganClick }) => {
       onPointerOver={() => setHovered(true)}
       onPointerOut={() => setHovered(false)}
     >
-      <sphereGeometry args={[0.08, 16, 16]} />
+      <sphereGeometry args={[0.06, 24, 24]} />
       <meshStandardMaterial
         color={getStatusColor()}
         emissive={getStatusColor()}
-        emissiveIntensity={hovered ? 1.5 : 0.8}
+        emissiveIntensity={hovered ? 3 : 1.5}
         transparent
-        opacity={0.9}
+        opacity={0.6} // Reduced from 0.9
       />
       {/* Outer glow ring */}
       <mesh>
-        <sphereGeometry args={[0.12, 16, 16]} />
+        <sphereGeometry args={[0.1, 24, 24]} />
         <meshBasicMaterial
           color={getStatusColor()}
           transparent
-          opacity={hovered ? 0.3 : 0.15}
+          opacity={hovered ? 0.3 : 0.1} // Reduced
+          depthTest={false} // Ensure glow is visible
         />
       </mesh>
     </mesh>
   );
 };
 
-// Transparent anatomical body with organic shapes
+// Transparent anatomical body using GLB model
 const AnatomicalBody = ({ gender }) => {
+  const { scene } = useGLTF('/models/body.glb');
   const bodyColor = gender === 'female' ? '#ec4899' : '#60a5fa';
   
-  // Helper for organic limb shapes
-  const Limb = ({ position, rotation, args, opacity = 0.4 }) => (
-    <mesh position={position} rotation={rotation}>
-      <capsuleGeometry args={args} />
-      <meshStandardMaterial
-        color={bodyColor}
-        transparent
-        opacity={opacity}
-        wireframe={true}
-        wireframeLinewidth={1.5}
-      />
-    </mesh>
-  );
-
-  const Joint = ({ position, args = [0.09, 16, 16], opacity = 0.5 }) => (
-    <mesh position={position}>
-      <sphereGeometry args={args} />
-      <meshStandardMaterial
-        color={bodyColor}
-        transparent
-        opacity={opacity}
-        wireframe={true}
-      />
-    </mesh>
-  );
+  React.useEffect(() => {
+    scene.traverse((child) => {
+      if (child.isMesh) {
+        child.material.transparent = true;
+        child.material.opacity = 0.8; // Increased for better visibility
+        child.material.wireframe = false;
+        child.material.color.set(bodyColor);
+        child.material.emissive.set(bodyColor);
+        child.material.emissiveIntensity = 0.6; // Increased glow
+        child.material.roughness = 0.1;
+        child.material.metalness = 0.9;
+      }
+    });
+  }, [scene, bodyColor]);
 
   return (
     <group>
-      {/* --- HEAD & NECK --- */}
-      {/* Head */}
-      <mesh position={[0, 1.65, 0]}>
-        <capsuleGeometry args={[0.14, 0.16, 4, 16]} />
-        <meshStandardMaterial
-          color={bodyColor}
-          transparent
-          opacity={0.5}
-          wireframe={true}
+      <Center>
+        <primitive 
+          object={scene} 
+          scale={2.2} 
+          position={[0, 0, 0]} 
+          rotation={[0, 0, 0]} 
         />
-      </mesh>
-      
-      {/* Neck */}
-      <mesh position={[0, 1.45, 0]}>
-        <cylinderGeometry args={[0.07, 0.09, 0.15, 16]} />
-        <meshStandardMaterial
-          color={bodyColor}
-          transparent
-          opacity={0.5}
-          wireframe={true}
-        />
-      </mesh>
-
-      {/* --- TORSO --- */}
-      {/* Upper Chest */}
-      <mesh position={[0, 1.25, 0]}>
-        <capsuleGeometry args={[0.22, 0.25, 4, 16]} />
-        <meshStandardMaterial
-          color={bodyColor}
-          transparent
-          opacity={0.5}
-          wireframe={true}
-        />
-      </mesh>
-
-      {/* Abdomen / Spine Area */}
-      <mesh position={[0, 0.95, 0]}>
-        <cylinderGeometry args={[0.18, 0.16, 0.4, 16]} />
-        <meshStandardMaterial
-          color={bodyColor}
-          transparent
-          opacity={0.4}
-          wireframe={true}
-        />
-      </mesh>
-
-      {/* Pelvis */}
-      <mesh position={[0, 0.7, 0]}>
-        <capsuleGeometry args={[0.19, 0.15, 4, 16]} />
-        <meshStandardMaterial
-          color={bodyColor}
-          transparent
-          opacity={0.5}
-          wireframe={true}
-        />
-      </mesh>
-
-      {/* --- ARMS --- */}
-      {/* Shoulders */}
-      <Joint position={[-0.32, 1.35, 0]} args={[0.11, 16, 16]} />
-      <Joint position={[0.32, 1.35, 0]} args={[0.11, 16, 16]} />
-
-      {/* Upper Arms */}
-      <Limb position={[-0.42, 1.1, 0]} rotation={[0, 0, 0.15]} args={[0.09, 0.45, 4, 16]} />
-      <Limb position={[0.42, 1.1, 0]} rotation={[0, 0, -0.15]} args={[0.09, 0.45, 4, 16]} />
-
-      {/* Elbows */}
-      <Joint position={[-0.5, 0.85, 0]} args={[0.08, 16, 16]} />
-      <Joint position={[0.5, 0.85, 0]} args={[0.08, 16, 16]} />
-
-      {/* Forearms */}
-      <Limb position={[-0.58, 0.6, 0]} rotation={[0, 0, 0.1]} args={[0.08, 0.45, 4, 16]} />
-      <Limb position={[0.58, 0.6, 0]} rotation={[0, 0, -0.1]} args={[0.08, 0.45, 4, 16]} />
-
-      {/* Hands */}
-      <Joint position={[-0.65, 0.35, 0]} args={[0.07, 16, 16]} />
-      <Joint position={[0.65, 0.35, 0]} args={[0.07, 16, 16]} />
-
-      {/* --- LEGS --- */}
-      {/* Hips */}
-      <Joint position={[-0.15, 0.65, 0]} args={[0.12, 16, 16]} />
-      <Joint position={[0.15, 0.65, 0]} args={[0.12, 16, 16]} />
-
-      {/* Thighs */}
-      <Limb position={[-0.2, 0.35, 0]} rotation={[0, 0, -0.05]} args={[0.11, 0.55, 4, 16]} />
-      <Limb position={[0.2, 0.35, 0]} rotation={[0, 0, 0.05]} args={[0.11, 0.55, 4, 16]} />
-
-      {/* Knees */}
-      <Joint position={[-0.22, 0.05, 0.02]} args={[0.1, 16, 16]} />
-      <Joint position={[0.22, 0.05, 0.02]} args={[0.1, 16, 16]} />
-
-      {/* Calves */}
-      <Limb position={[-0.25, -0.35, 0]} rotation={[0, 0, -0.02]} args={[0.09, 0.55, 4, 16]} />
-      <Limb position={[0.25, -0.35, 0]} rotation={[0, 0, 0.02]} args={[0.09, 0.55, 4, 16]} />
-
-      {/* Ankles/Feet */}
-      <Joint position={[-0.28, -0.7, 0.05]} args={[0.08, 16, 16]} />
-      <Joint position={[0.28, -0.7, 0.05]} args={[0.08, 16, 16]} />
-
-      {/* --- INTERNAL STRUCTURE --- */}
-      {/* Spine */}
-      <group>
-        {[0.8, 0.9, 1.0, 1.1, 1.2].map((y, i) => (
-          <mesh key={i} position={[0, y, -0.05]}>
-            <boxGeometry args={[0.06, 0.08, 0.06]} />
-            <meshStandardMaterial
-              color="#ffffff"
-              transparent
-              opacity={0.8}
-            />
-          </mesh>
-        ))}
-      </group>
-      
-      {/* Rib Cage */}
-      <group position={[0, 1.15, 0]}>
-        {[-0.14, -0.1, 0, 0.1, 0.14].map((x, i) => (
-          <React.Fragment key={i}>
-            <mesh position={[x, 0, 0.08]} rotation={[0, 0, x * 0.5]}>
-              <capsuleGeometry args={[0.015, 0.3, 4, 8]} />
-              <meshStandardMaterial
-                color="#ffffff"
-                transparent
-                opacity={0.7}
-              />
-            </mesh>
-            <mesh position={[x, 0, -0.04]} rotation={[0, 0, x * 0.5]}>
-              <capsuleGeometry args={[0.015, 0.3, 4, 8]} />
-              <meshStandardMaterial
-                color="#ffffff"
-                transparent
-                opacity={0.7}
-              />
-            </mesh>
-          </React.Fragment>
-        ))}
-      </group>
+      </Center>
     </group>
   );
 };
@@ -251,10 +113,12 @@ const Model = ({ gender, onOrganClick, organStatus }) => {
   // Organ positions (anatomically accurate)
   // Organ positions (anatomically accurate for new model)
   const organPositions = {
-    brain: [0, 1.65, 0.1],      // Adjusted for new head position
-    heart: [-0.08, 1.25, 0.15], // Adjusted for new chest position
-    lungs: [0.08, 1.3, 0.15],   // Adjusted for new chest position
-    liver: [0.1, 0.95, 0.12],   // Adjusted for new abdomen position
+    brain: [0, 1.8, 0.25],      
+    heart: [-0.18, 1.1, 0.45], 
+    lungs: [0.18, 1.1, 0.45],   
+    liver: [0.2, 0.6, 0.5],   
+    stomach: [-0.15, 0.5, 0.5],
+    kidneys: [-0.12, 0.1, 0.3], 
   };
   
   return (
@@ -282,23 +146,13 @@ const DigitalTwin3D = ({ gender = 'male', onOrganClick, organStatus }) => {
       <Canvas shadows gl={{ preserveDrawingBuffer: true }}>
         <PerspectiveCamera makeDefault position={[0, 1, 5]} fov={50} />
         
-        {/* Ambient lighting */}
+        {/* Frontal high-visibility lighting */}
         <ambientLight intensity={1.5} />
-        
-        {/* Key light */}
-        <spotLight position={[5, 5, 5]} angle={0.3} penumbra={1} intensity={2.5} />
-        
-        {/* Rim light for better depth */}
-        <spotLight position={[-5, 3, -5]} angle={0.3} penumbra={1} intensity={2} color="#60a5fa" />
-        
-        {/* Fill light from below */}
-        <pointLight position={[0, -2, 2]} intensity={1.5} color="#ffffff" />
-        
-        {/* Additional front light */}
-        <pointLight position={[0, 1, 3]} intensity={1.5} color="#60a5fa" />
-        
-        {/* Background environment */}
-        <Environment preset="night" />
+        <directionalLight position={[0, 10, 10]} intensity={2.5} />
+        <directionalLight position={[10, 5, -5]} intensity={1.5} />
+        <directionalLight position={[-10, 5, -5]} intensity={1.5} />
+        <pointLight position={[0, 1, 5]} intensity={3} color={gender === 'female' ? '#ec4899' : '#60a5fa'} />
+        <Environment preset="city" intensity={2} />
         
         <Suspense fallback={<Html center><span className="text-primary-400">Loading...</span></Html>}>
           <ErrorBoundary>
@@ -345,11 +199,11 @@ const DigitalTwin3D = ({ gender = 'male', onOrganClick, organStatus }) => {
           </div>
           <div className="flex items-center space-x-2">
             <span className="w-3 h-3 rounded-full bg-amber-400 shadow-lg shadow-amber-400/50"></span>
-            <span className="text-xs text-slate-300">Warning / At Risk</span>
+            <span className="text-xs text-slate-300">Risk / Warning</span>
           </div>
           <div className="flex items-center space-x-2">
             <span className="w-3 h-3 rounded-full bg-red-500 shadow-lg shadow-red-500/50"></span>
-            <span className="text-xs text-slate-300">Critical / Diseased</span>
+            <span className="text-xs text-slate-300">Diseased / Critical</span>
           </div>
         </div>
       </div>
